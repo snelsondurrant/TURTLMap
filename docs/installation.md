@@ -14,6 +14,7 @@ cd gtsam-4.2/
 
 # Build using the instructions provided by the developers
 mkdir build
+cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DGTSAM_TANGENT_PREINTEGRATION=OFF
 make check -j # -j flag to use all available cores. can change by adding number (i.e. -j8 for 8 cores)
 sudo make install
