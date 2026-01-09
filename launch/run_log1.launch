@@ -1,0 +1,9 @@
+<launch>
+    <include file="$(find turtlmap)/launch/turtlmap.launch">
+        <arg name="bag_dirs" value="/root/bags/log1"/>
+        <arg name="bag1" value="/root/bags/log1/log1.bag"/>
+        <arg name="bag2" value="/root/bags/log1/log1_imu.bag"/>
+        <arg name="bag3" value="/root/bags/log1/log1_zed.bag"/>
+        <arg name="start_time" value="20"/>
+    </include>
+</launch>
