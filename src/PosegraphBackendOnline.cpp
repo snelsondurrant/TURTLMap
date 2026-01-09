@@ -4,6 +4,9 @@
 
 // print thread id
 #include <thread>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
 
 
 
@@ -59,6 +62,33 @@ namespace pose_graph_backend
 
         // set use_sim_time to true
         nh_private_.setParam("use_sim_time", true);
+
+        nh_private_.setParam("use_sim_time", true);
+
+        // --- START DVL DROPOUT SIMULATION ---
+        try {
+            YAML::Node config = YAML::LoadFile(config_file);
+            if (config["simulate_dropout"]) {
+                simulate_dropout_ = config["simulate_dropout"].as<bool>();
+            }
+            if (config["dropout_frequency"]) {
+                dropout_frequency_ = config["dropout_frequency"].as<double>();
+            }
+            if (config["dropout_duration"]) {
+                dropout_duration_ = config["dropout_duration"].as<double>();
+            }
+        } catch (const std::exception& e) {
+        }
+
+        if (simulate_dropout_) {
+            if (dropout_frequency_ > 1e-6) {
+                dropout_period_ = 1.0 / dropout_frequency_;
+            } else {
+                simulate_dropout_ = false;
+            }
+        }
+        // --- END DVL DROPOUT SIMULATION ---
+
         double start_time = 0.0;
         int init_count = 0;
 
@@ -473,6 +503,18 @@ namespace pose_graph_backend
     // void PosegraphBackendOnline::callbackDVL(const geometry_msgs::TwistWithCovarianceStampedConstPtr& dvl_msg)
     void PosegraphBackendOnline::callbackDVL(const waterlinked_a50_ros_driver::DVLConstPtr& dvl_msg)
     {
+        
+        // --- START DVL DROPOUT SIMULATION ---
+        if (simulate_dropout_) {
+            double current_time = dvl_msg->header.stamp.toSec();
+            double time_in_cycle = std::fmod(current_time, dropout_period_);
+            
+            if (time_in_cycle < dropout_duration_) {
+                return;
+            }
+        }
+        // --- END DVL DROPOUT SIMULATION ---
+
         if (is_rot_initialized_ == false)
         {
 

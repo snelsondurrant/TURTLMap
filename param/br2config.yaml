@@ -118,3 +118,9 @@ using_smoother: true
 kf_gap_time: 1.0
 
 using_pseudo_dvl: true
+
+# --- START DVL DROPOUT SIMULATION ---
+simulate_dropout: true
+dropout_frequency: 0.033333333 # [Hz] 1/30 seconds
+dropout_duration: 5.0 # [s]
+# --- END DVL DROPOUT SIMULATION ---

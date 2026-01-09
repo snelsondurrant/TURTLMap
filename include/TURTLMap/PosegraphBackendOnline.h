@@ -118,7 +118,13 @@ namespace pose_graph_backend
         gtsam::Pose3 latest_dvl_pose_;
         int imu_count_ = 0;
         gtsam::NavState latest_imu_prop_state_;
-        
+
+        // --- START DVL DROPOUT SIMULATION ---
+        bool simulate_dropout_ = false;
+        double dropout_frequency_ = 0.0;
+        double dropout_duration_ = 0.0;
+        double dropout_period_ = 0.0;  
+        // --- END DVL DROPOUT SIMULATION ---
 
     public:
         PosegraphBackendOnline(/* args */);
