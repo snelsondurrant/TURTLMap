@@ -5,6 +5,7 @@
 #include <ros/ros.h>
 #include "TURTLMap/Posegraph.h"
 #include <string>
+#include <fstream>
 #include <ros/callback_queue.h>
 #include <sensor_msgs/Imu.h>
 #include <geometry_msgs/TwistWithCovarianceStamped.h>
@@ -35,6 +36,9 @@ namespace pose_graph_backend
         ros::ServiceServer save_traj_service_;
         bool save_trajctory_(turtlmap::save_trajectory::Request &req,
                             turtlmap::save_trajectory::Response &res);
+        std::string traj_save_path_;
+        std::ofstream traj_tum_file_;
+        void saveTrajectoryTUM(const double &timestamp, const gtsam::Pose3 &pose);
         std::vector<double> kf_timestamps_;
         std::vector<double> traj_timestamps_;
         std::vector<gtsam::Pose3> traj_poses_;

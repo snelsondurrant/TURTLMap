@@ -5,11 +5,12 @@
     <arg name="bag2" default="$(arg bag_dirs)/logX_imu.bag"/>
     <arg name="bag3" default="$(arg bag_dirs)/logX_zed-001.bag"/>
     <arg name="start_time" default="S"/>
-  
+    <arg name="traj_save_path" default=""/>
+
     <!-- rosbag play node with the arguments -->
-    <node pkg="rosbag" type="play" name="rosbag_play" 
-          args="$(arg bag1) $(arg bag2) $(arg bag3) --clock /tf:=/tf_old /tf_static:=/tf_static_old -s $(arg start_time)" 
-    output="log"/>
+    <node pkg="rosbag" type="play" name="rosbag_play"
+          args="$(arg bag1) $(arg bag2) $(arg bag3) --clock /tf:=/tf_old /tf_static:=/tf_static_old -s $(arg start_time)"
+    output="log" required="true"/>
 
     <!-- set sim time to true -->
     <param name="/use_sim_time" value="true" />
@@ -18,6 +19,7 @@
 
     <node name="turtlmap" pkg="turtlmap" type="turtlmap_node" output="screen">
         <param name="config_file" value="$(find turtlmap)/param/br2config.yaml" />
+        <param name="traj_save_path" value="$(arg traj_save_path)" />
     </node>
 
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find bluerov_visualizer)/viz.rviz" />

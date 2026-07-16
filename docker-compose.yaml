@@ -1,0 +1,86 @@
+# Copyright (c) 2026 BYU FROST Lab
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+x-turtlmap-base: &turtlmap-base
+  build:
+    context: .
+    target: turtlmap
+  image: turtlmap:latest
+  environment:
+    - DISPLAY=${DISPLAY}
+    - QT_X11_NO_MITSHM=1
+  volumes:
+    - .:/root/catkin_ws/src/TURTLMap
+    - ./bags:/root/bags
+    - ./output:/root/output
+    - /tmp/.X11-unix:/tmp/.X11-unix
+
+x-python-base: &python-base
+  build:
+    context: .
+    target: python-scripts
+  image: turtlmap-python:latest
+  volumes:
+    - ./bags:/root/bags
+    - ./output:/root/output
+
+services:
+  log1:
+    <<: *turtlmap-base
+    command: >
+      bash -c "source /opt/ros/noetic/setup.bash
+      && catkin build turtlmap --no-deps
+      && source /root/catkin_ws/devel/setup.bash
+      && { roslaunch turtlmap run_log1.launch || true; }
+      && chown -R $(stat -c '%u:%g' /root/bags) /root/output"
+
+  log2:
+    <<: *turtlmap-base
+    depends_on:
+      log1:
+        condition: service_completed_successfully
+    command: >
+      bash -c "source /opt/ros/noetic/setup.bash
+      && catkin build turtlmap --no-deps
+      && source /root/catkin_ws/devel/setup.bash
+      && { roslaunch turtlmap run_log2.launch || true; }
+      && chown -R $(stat -c '%u:%g' /root/bags) /root/output"
+
+  log1-python:
+    <<: *python-base
+    depends_on:
+      log1:
+        condition: service_completed_successfully
+    command: >
+      bash -c "python3 /root/ros1_to_ros2_bag.py /root/output/log1_ros2
+      /root/bags/log1/log1.bag /root/bags/log1/log1_imu.bag /root/bags/log1/log1_zed.bag
+      --dvl-msgs-dir /root/dvl_msgs/msg
+      && python3 /root/ned_frd_to_enu_flu.py /root/output/log1_global_tm_ned.tum /root/output/log1_global_tm.tum
+      && python3 /root/ned_frd_to_enu_flu.py --body-only /root/bags/log1/stamped_groundtruth.txt /root/output/log1_truth_raw.tum
+      && python3 /root/clean_mocap_ground_truth.py /root/output/log1_truth_raw.tum /root/output/log1_truth.tum
+      && chown -R $(stat -c '%u:%g' /root/bags) /root/output"
+
+  log2-python:
+    <<: *python-base
+    depends_on:
+      log2:
+        condition: service_completed_successfully
+    command: >
+      bash -c "python3 /root/ros1_to_ros2_bag.py /root/output/log2_ros2
+      /root/bags/log2/log2.bag /root/bags/log2/log2_imu.bag /root/bags/log2/log2_zed.bag
+      --dvl-msgs-dir /root/dvl_msgs/msg
+      && python3 /root/ned_frd_to_enu_flu.py /root/output/log2_global_tm_ned.tum /root/output/log2_global_tm.tum
+      && python3 /root/ned_frd_to_enu_flu.py --body-only /root/bags/log2/stamped_groundtruth.txt /root/output/log2_truth_raw.tum
+      && python3 /root/clean_mocap_ground_truth.py /root/output/log2_truth_raw.tum /root/output/log2_truth.tum
+      && chown -R $(stat -c '%u:%g' /root/bags) /root/output"

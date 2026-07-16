@@ -50,7 +50,13 @@ namespace pose_graph_backend
 
         return true;
     }
-    
+
+    void PosegraphBackendOnline::saveTrajectoryTUM(const double &timestamp, const gtsam::Pose3 &pose)
+    {
+        // TUM format: timestamp x y z qx qy qz qw
+        traj_tum_file_ << std::fixed << std::setprecision(12) << timestamp << " " << pose.translation().x() << " " << pose.translation().y() << " " << pose.translation().z() << " " << pose.rotation().toQuaternion().x() << " " << pose.rotation().toQuaternion().y() << " " << pose.rotation().toQuaternion().z() << " " << pose.rotation().toQuaternion().w() << std::endl;
+    }
+
     PosegraphBackendOnline::PosegraphBackendOnline(std::string config_file)
     {
         nh_private_ = ros::NodeHandle("~");
@@ -59,6 +65,17 @@ namespace pose_graph_backend
 
         // set use_sim_time to true
         nh_private_.setParam("use_sim_time", true);
+
+        nh_private_.param<std::string>("traj_save_path", traj_save_path_, "");
+        if (!traj_save_path_.empty())
+        {
+            traj_tum_file_.open(traj_save_path_);
+            if (!traj_tum_file_.is_open())
+            {
+                ROS_ERROR_STREAM("Could not open trajectory file " << traj_save_path_);
+            }
+        }
+
         double start_time = 0.0;
         int init_count = 0;
 
@@ -623,6 +640,11 @@ namespace pose_graph_backend
 
         traj_poses_.push_back(latest_publish_pose_base_link);
         traj_timestamps_.push_back(pose_tf_msg.header.stamp.toSec());
+
+        if (traj_tum_file_.is_open())
+        {
+            saveTrajectoryTUM(traj_timestamps_.back(), traj_poses_.back());
+        }
 
 
 
